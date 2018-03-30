@@ -6,7 +6,7 @@ var connection = mySql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "82791997Ak",
     database: "bamazon"
 });
 
@@ -56,8 +56,9 @@ var promptUser = function() {
 var searchProduct = function(id, quantityReq) {
     connection.query("SELECT * FROM products WHERE ?", {item_id: id}, function(err, res) {
         if(err) throw err;
+        var productObj = res[0];
         quantityReq = parseInt(quantityReq); // will work without this line but it helps keep the data type uniform
-        console.log(res[0].stock_quantity, quantityReq);
+
         if(res[0].stock_quantity - quantityReq < 0) {
             console.log("sorry we dont have enough of "+ res[0].product_name);
             if(res[0].stock_quantity > 0) {
@@ -75,9 +76,28 @@ var searchProduct = function(id, quantityReq) {
                 }
             ]).then(function(res) {
                 if(res.confirmPurchase){
-                    //processTransaction(quantityReq);
+                    processTransaction(productObj, quantityReq);
+                    console.log(productObj);
                 }
             })
         }
     });
+}
+var processTransaction = function(obj,float) {
+
+    var newStock = obj.stock_quantity - float;
+    var objId = obj.item_id;
+    var sql = "UPDATE products SET ? WHERE ?";
+    connection.query(sql, [{stock_quantity: newStock}, {item_id: objId}], function (error, results, fields) {
+        if (error) throw error;
+        console.clear();
+        //console.log(results);
+        console.log("------------TRANSACTION RECEIPT-----------\n");
+        console.log("Product name: "+ obj.product_name+"\n"+
+                    "Product ID: "+ obj.item_id+ "\n"+
+                    "Price per unit: "+ obj.price+ "\n"+
+                    "Quantity: "+ float+ ".......Total: "+ obj.price * float
+        )
+      });
+
 }
